@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 void main() => runApp(MyApp());
 
@@ -144,19 +146,48 @@ class _MyAppState extends State<MyApp> {
         _infoStrings.add(info);
       });
     };
+
+    AgoraRtcEngine.onRecordFrame = (Uint8List bytes, int numOfSamples, int bytesPerSample,
+    int channels, int samplesPerSec){
+      debugPrint("onRecordFrame 数据回来了哦->"+bytes.toString());
+
+    };
+    AgoraRtcEngine.onPlaybackFrame = (Uint8List bytes, int numOfSamples, int bytesPerSample,
+    int channels, int samplesPerSec){
+      debugPrint("onPlaybackFrame 数据回来了哦->"+bytes.toString());
+
+    };
   }
 
-  void _toggleChannel() {
-    setState(() async {
-      if (_isInChannel) {
-        _isInChannel = false;
-        await AgoraRtcEngine.leaveChannel();
-        await AgoraRtcEngine.stopPreview();
-      } else {
-        _isInChannel = true;
-        await AgoraRtcEngine.startPreview();
-        await AgoraRtcEngine.joinChannel(null, 'flutter', null, 0);
+  void _toggleChannel() async {
+    // await for camera and mic permissions before pushing video page
+    Map<Permission, PermissionStatus> list = await _handleCameraAndMic();
+    bool isGranted = true;
+    list.forEach((key, value) {
+      print("权限内容$key=$value");
+
+      if (!value.isGranted) {
+        isGranted = false;
+        print("拒绝=====");
+        return;
       }
+    });
+    print("最终权限=$isGranted");
+    if (!isGranted) {
+      debugPrint("没有权限==");
+
+      return;
+    }
+
+    if (_isInChannel) {
+      await AgoraRtcEngine.leaveChannel();
+      await AgoraRtcEngine.stopPreview();
+    } else {
+      await AgoraRtcEngine.startPreview();
+      await AgoraRtcEngine.joinChannel(null, 'flutter', null, 0);
+    }
+    setState(() {
+      _isInChannel = !_isInChannel;
     });
   }
 
@@ -172,6 +203,13 @@ class _MyAppState extends State<MyApp> {
       ],
     );
   }
+
+
+  Future<Map<Permission, PermissionStatus>> _handleCameraAndMic() async {
+    return await [Permission.camera, Permission.microphone].request();
+  }
+
+
 
   Iterable<Widget> get _renderWidget sync* {
     yield AgoraRenderWidget(0, local: true, preview: false);

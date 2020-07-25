@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Rect;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.SurfaceView;
 
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.agora.rtc.IAudioFrameObserver;
 import io.agora.rtc.IRtcEngineEventHandler;
 import io.agora.rtc.RtcEngine;
 import io.agora.rtc.internal.LastmileProbeConfig;
@@ -106,6 +108,7 @@ public class AgoraRtcEnginePlugin implements MethodCallHandler, EventChannel.Str
                 try {
                     String appId = call.argument("appId");
                     mRtcEngine = RtcEngine.create(context, appId, mRtcEventHandler);
+                    mRtcEngine.registerAudioFrameObserver(mAudioFrameObserver);
                     result.success(null);
                 } catch (Exception e) {
                     throw new RuntimeException("NEED TO check rtc sdk init fatal error\n");
@@ -1683,6 +1686,34 @@ public class AgoraRtcEnginePlugin implements MethodCallHandler, EventChannel.Str
             }
 
             return list;
+        }
+    };
+
+    //flutter 不支持 https://github.com/AgoraIO/Flutter-SDK/issues/141
+    private final IAudioFrameObserver mAudioFrameObserver = new IAudioFrameObserver() {
+
+        @Override
+        public boolean onRecordFrame(byte[] bytes, int numOfSamples, int bytesPerSample, int channels, int samplesPerSec) {
+            HashMap<String, Object> map = new HashMap<>();
+            map.put("bytes", bytes);
+            map.put("numOfSamples", numOfSamples);
+            map.put("bytesPerSample", bytesPerSample);
+            map.put("channels", channels);
+            map.put("samplesPerSec", samplesPerSec);
+            sendEvent("onRecordFrame", map);
+            return true;
+        }
+
+        @Override
+        public boolean onPlaybackFrame(byte[] bytes, int numOfSamples, int bytesPerSample, int channels, int samplesPerSec) {
+            HashMap<String, Object> map = new HashMap<>();
+            map.put("bytes", bytes);
+            map.put("numOfSamples", numOfSamples);
+            map.put("bytesPerSample", bytesPerSample);
+            map.put("channels", channels);
+            map.put("samplesPerSec", samplesPerSec);
+            sendEvent("onPlaybackFrame", map);
+            return true;
         }
     };
 

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -409,6 +410,12 @@ class AgoraRtcEngine {
 
   /// Occurs when received channel media relay event
   static void Function(int event) onReceivedChannelMediaRelayEvent;
+
+  static void Function(Uint8List bytes, int numOfSamples, int bytesPerSample,
+      int channels, int samplesPerSec) onRecordFrame;
+
+  static void Function(Uint8List bytes, int numOfSamples, int bytesPerSample,
+      int channels, int samplesPerSec) onPlaybackFrame;
 
   // Core Methods
   /// Creates an RtcEngine instance.
@@ -1558,7 +1565,18 @@ class AgoraRtcEngine {
           onReceivedChannelMediaRelayEvent(map["event"]);
         }
         break;
-
+      case 'onRecordFrame':
+        if (onRecordFrame != null) {
+          onRecordFrame(map['bytes'], map['numOfSamples'],
+              map['bytesPerSample'], map['channels'], map['samplesPerSec']);
+        }
+        break;
+      case 'onPlaybackFrame':
+        if (onPlaybackFrame != null) {
+          onPlaybackFrame(map['bytes'], map['numOfSamples'],
+              map['bytesPerSample'], map['channels'], map['samplesPerSec']);
+        }
+        break;
       default:
     }
   }

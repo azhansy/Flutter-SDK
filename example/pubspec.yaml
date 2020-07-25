@@ -18,5 +18,8 @@ dev_dependencies:
   agora_rtc_engine:
     path: ../
 
+  permission_handler: ^5.0.1+1
+
+
 flutter:
   uses-material-design: true
