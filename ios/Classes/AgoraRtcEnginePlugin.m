@@ -1,5 +1,6 @@
 #import "AgoraRtcEnginePlugin.h"
 #import <AgoraRtcEngineKit/AgoraRtcEngineKit.h>
+#import "AgoraAudioFrameObserver.h"
 
 @interface AgoraRendererView ()
 @property(nonatomic, strong) UIView *renderView;
@@ -119,7 +120,11 @@
     if ([@"create" isEqualToString:method]) {
         NSString *appId = [self stringFromArguments:params key:@"appId"];
         self.agoraRtcEngine = [AgoraRtcEngineKit sharedEngineWithAppId:appId delegate:self];
+        //https://docs.agora.io/cn/Voice/raw_data_audio_apple?platform=iOS
+        // 注册语音观测器 registerAudioFrameObserver
+//        addRegiset(self.agoraRtcEngine);
         [_eventChannel setStreamHandler:self];
+
         result(nil);
     } else if ([@"destroy" isEqualToString:method]) {
         self.agoraRtcEngine = nil;
@@ -1099,6 +1104,22 @@
 // - (void)rtcEngineLocalAudioMixingDidFinish:(AgoraRtcEngineKit *_Nonnull)engine {
 //   [self sendEvent:@"onLocalAudioMixingFinished" params:nil];
 // }
+
+
+- (void)rtcEngine:(AgoraRtcEngineKit *_Nonnull)engine
+    onRecordFrame:(Byte) byte
+     numOfSamples:(NSInteger) numOfSamples
+   bytesPerSample:(NSInteger) bytesPerSample
+         channels:(NSInteger) channels
+    samplesPerSec:(NSInteger) samplesPerSec {
+    [self sendEvent:@"onRecordFrame" params:@{
+            @"byte": @(byte),
+            @"numOfSamples": @(numOfSamples),
+            @"bytesPerSample": @(bytesPerSample),
+            @"channels": @(channels),
+            @"samplesPerSec": @(samplesPerSec)
+    }];
+}
 
 #pragma mark - helper
 
