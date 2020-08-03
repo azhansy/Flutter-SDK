@@ -1701,7 +1701,7 @@ public class AgoraRtcEnginePlugin implements MethodCallHandler, EventChannel.Str
             map.put("channels", channels);
             map.put("samplesPerSec", samplesPerSec);
             sendEvent("onRecordFrame", map);
-            return true;
+            return false;
         }
 
         @Override
@@ -1713,7 +1713,7 @@ public class AgoraRtcEnginePlugin implements MethodCallHandler, EventChannel.Str
             map.put("channels", channels);
             map.put("samplesPerSec", samplesPerSec);
             sendEvent("onPlaybackFrame", map);
-            return true;
+            return false;
         }
     };
 
